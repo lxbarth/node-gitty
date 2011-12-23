@@ -1,0 +1,17 @@
+{
+  "name": "gitty",
+  "description": "Low level git wrapper.",
+  "tags": ["git"],
+  "version": "0.0.0",
+  "author": "Alex Barth <lxbarth@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/lxbarth/gitty.git"
+  },
+  "bugs": "http://github.com/creationix/node-git/issues",
+  "engines": ["node ~ 0.4.x"],
+  "main": "./gitty",
+  "scripts": {
+      "test": "expresso"
+  }
+}

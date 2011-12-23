@@ -4,7 +4,9 @@ var spawn = require('child_process').spawn,
     fs = require('fs'),
     path = require('path');
 
-var debug = false;
+var options = {
+    verbose: false
+};
 
 var clone = function(repo, dir, args, callback) {
     callback = callback ? callback : args;
@@ -22,25 +24,32 @@ var open = function(tree, user, callback) {
     path.exists(tree, function(exists) {
         callback(
             exists ? null : new Error('Working tree does not exist'),
-            exists ? new Git(tree) : null
+            exists ? new Git(tree, user) : null
         );
     });
 };
 
 var run = function(cwd, args, callback) {
     callback = callback || function() {};
+    var err = [];
+    options.verbose && console.log(['git'].concat(args).join(' '));
     var c = spawn('git', args, {cwd: cwd});
-    if (debug) {
-        c.stdout.on('data', console.log);
-        c.stderr.on('data', console.error);
-    }
-    c.on('exit', callback);
+    c.stdout.on('data', function(data) {
+        options.verbose && console.log(data.toString());
+    });
+    c.stderr.on('data', function(data) {
+        err.push(data.toString());
+        options.verbose && console.error(err);
+    });
+    c.on('exit', function() {
+        callback(err.length ? err.join('\n') : null);
+    });
     return c;
 };
 
-var Git = function(tree, user, email) {
+var Git = function(tree, user) {
     this.tree = tree;
-    this.user = user;
+    user && (this.user = user);
 };
 
 ['add', 'bisect', 'branch', 'checkout', 'clone', 'commit', 'diff', 'fetch',
@@ -58,9 +67,9 @@ var Git = function(tree, user, email) {
 Git.prototype.defaultArgs = function(command, args) {
     switch(command) {
         case 'commit':
-            args.push({
-                '--author': this.user.name + ' <' + this.user.email + '>'
-            });
+            this.user && args.push(
+                '--author="' + this.user.name + ' <' + this.user.email + '>"'
+            );
             break;
     }
 };
@@ -71,5 +80,5 @@ module.exports = {
     open: open,
     run: run,
     Git: Git,
-    debug: debug
+    options: options
 };
